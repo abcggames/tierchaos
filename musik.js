@@ -11,6 +11,16 @@ const playerContainer = document.querySelector("#player");
 const storageKey = "tierchaos.youtubePlaylist";
 const locales = window.TIERCHAOS_LOCALES;
 const youtubeHosts = new Set(["youtube.com", "www.youtube.com", "m.youtube.com", "music.youtube.com", "youtu.be"]);
+const openOnYouTube = {
+  de: "Auf YouTube öffnen",
+  en: "Open on YouTube",
+  fr: "Ouvrir sur YouTube",
+  es: "Abrir en YouTube",
+  it: "Apri su YouTube",
+  pt: "Abrir no YouTube",
+  ru: "Открыть на YouTube",
+  tr: "YouTube’da aç",
+};
 let language = locales[navigator.language.split("-")[0]] ? navigator.language.split("-")[0] : "en";
 
 function refreshLanguage() {
@@ -20,6 +30,10 @@ function refreshLanguage() {
     label.textContent = copy[label.dataset.i18n];
   }
   button.textContent = panel.hidden ? copy.music : copy.close_music;
+  const directLink = playerContainer.querySelector("a");
+  if (directLink) {
+    directLink.textContent = openOnYouTube[language];
+  }
   if (status.textContent) {
     status.textContent = copy.media_error;
   }
@@ -68,12 +82,21 @@ function loadPlayer(media) {
     url.pathname += "/" + media.id;
     url.search = new URLSearchParams({playsinline: "1", loop: "1", playlist: media.id});
   }
+  url.searchParams.set("autoplay", "1");
+  const directLink = document.createElement("a");
+  const watchUrl = new URL(media.type === "playlist" ? "https://www.youtube.com/playlist" : "https://www.youtube.com/watch");
+  watchUrl.searchParams.set(media.type === "playlist" ? "list" : "v", media.id);
+  directLink.href = watchUrl.href;
+  directLink.target = "_blank";
+  directLink.rel = "noopener";
+  directLink.textContent = openOnYouTube[language];
+  directLink.style.cssText = "display: inline-block; margin-bottom: 8px; color: #d5ec91;";
   const frame = document.createElement("iframe");
   frame.title = locales[language].music;
-  frame.allow = "encrypted-media; picture-in-picture; fullscreen";
+  frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
   frame.referrerPolicy = "strict-origin-when-cross-origin";
   frame.src = url.href;
-  playerContainer.replaceChildren(frame);
+  playerContainer.replaceChildren(directLink, frame);
   form.hidden = true;
   change.hidden = Boolean(mediaSource(window.TIERCHAOS_YOUTUBE ?? ""));
 }
